@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Calm Neutral Harmony -->
-    <!-- Application Structure Plan: The application is structured as a tab-based single-page application (SPA). This design was chosen to break down the dense financial guide into manageable, thematic sections: "Главная" (Introduction), "Пульс Бизнеса: ДДС" (Cash Flow), "Карта Эффективности: ОПиУ" (P&L), "Финансовый Компас: Аналитика" (Analytics), and "Дорожная Карта" (Roadmap). This non-linear structure enhances usability by allowing users to focus on specific topics of interest or follow a logical learning path from basic concepts to practical implementation. Key interactions include tab navigation to switch content, interactive charts to visualize data, and expandable sections to reveal detailed information progressively, preventing cognitive overload and encouraging exploration. -->
+    <!-- Application Structure Plan: The application is structured as a tab-based single-page application (SPA). This design was chosen to break down the dense financial guide into manageable, thematic sections: "Главная" (Introduction), "Пульс Бизнеса: ДДС" (Cash Flow), "Карта Эффективности: ОПиУ" (P&L), "Финансовый Компас: Аналитика" (Analytics), and "Дорожная Карта" (Roadmap). This non-linear structure enhances usability by allowing users to focus on specific topics of interest or follow a logical learning path from basic concepts to practical implementation. Key interactions include tab navigation to switch content, interactive charts to visualize data, and expandable sections (accordion for roadmap, click-to-reveal for KPIs) to reveal detailed information progressively, preventing cognitive overload and encouraging exploration. -->
     <!-- Visualization & Content Choices: 
-    - Section "ДДС": Goal: Inform & Compare. Method: Bar chart (Chart.js) to show cash flow dynamics (receipts, expenses, net flow). Interaction: Users can toggle datasets. Justification: A chart provides a much quicker understanding of cash flow trends than a table.
+    - Section "ДДС": Goal: Inform & Compare. Method: Bar chart (Chart.js) to show cash flow dynamics (receipts, expenses, net flow). Interaction: Users can toggle datasets visibility via dedicated buttons. Justification: A chart provides a much quicker understanding of cash flow trends than a table, and toggles allow focused analysis of specific components.
     - Section "ОПиУ": Goal: Explain Relationships. Method: A visual diagram built with HTML/Tailwind to show the step-by-step calculation from Revenue to Net Profit. Justification: This visual flow is more intuitive for understanding the structure of a P&L statement than a simple list.
-    - Section "Аналитика": Goal: Inform & Define. Method: Donut chart for the Balance Sheet equation and interactive cards for KPIs. Interaction: Hovering over KPI cards reveals more info. Justification: Cards organize KPIs neatly, and a donut chart visually represents the fundamental accounting equation.
+    - Section "Аналитика": Goal: Inform & Define. Method: Donut chart for the Balance Sheet equation and interactive cards for KPIs. Interaction: Clicking KPI cards toggles a detailed description. Justification: Cards organize KPIs neatly, a donut chart visually represents the fundamental accounting equation, and click-to-reveal details provide depth on demand.
     - Section "Дорожная Карта": Goal: Guide & Organize. Method: An interactive accordion/checklist. Interaction: Clicking a step expands it to show details. Justification: This makes the implementation plan feel less daunting and more like an actionable, step-by-step guide. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -44,6 +44,10 @@
         }
         .nav-button {
             transition: all 0.3s ease;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Subtle shadow */
+        }
+        .nav-button:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         .nav-button.active {
             background-color: #3b82f6;
@@ -54,6 +58,17 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.5s ease-out;
+        }
+        .kpi-card-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem; /* leading-5 */
+            color: #475569; /* slate-600 */
+        }
+        .kpi-card.active .kpi-card-detail {
+            max-height: 100px; /* Sufficient height for content */
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -71,11 +86,11 @@
         </header>
 
         <nav class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
-            <button data-target="home" class="nav-button active py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-blue-100">Главная</button>
-            <button data-target="dds" class="nav-button py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-blue-100">Пульс Бизнеса: ДДС</button>
-            <button data-target="pnl" class="nav-button py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-blue-100">Карта Эффективности: ОПиУ</button>
-            <button data-target="analytics" class="nav-button py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-blue-100">Финансовый Компас: Аналитика</button>
-            <button data-target="roadmap" class="nav-button py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-blue-100">Дорожная Карта</button>
+            <button data-target="home" class="nav-button active py-2 px-4 bg-white rounded-lg">Главная</button>
+            <button data-target="dds" class="nav-button py-2 px-4 bg-white rounded-lg">Пульс Бизнеса: ДДС</button>
+            <button data-target="pnl" class="nav-button py-2 px-4 bg-white rounded-lg">Карта Эффективности: ОПиУ</button>
+            <button data-target="analytics" class="nav-button py-2 px-4 bg-white rounded-lg">Финансовый Компас: Аналитика</button>
+            <button data-target="roadmap" class="nav-button py-2 px-4 bg-white rounded-lg">Дорожная Карта</button>
         </nav>
 
         <main>
@@ -93,8 +108,13 @@
                  <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
                     <h2 class="text-2xl font-bold mb-2 text-slate-900">Пульс Бизнеса: Отчет о Движении Денежных Средств (ДДС)</h2>
                     <p class="mb-6 text-slate-600">ДДС — это ваш индикатор ликвидности. Он показывает, сколько РЕАЛЬНЫХ денег пришло и ушло, и отвечает на вопрос: "Куда делись деньги?". Ниже представлен интерактивный пример, демонстрирующий динамику денежных потоков.</p>
-                    <div class="chart-container mb-6">
+                    <div class="chart-container mb-4">
                         <canvas id="ddsChart"></canvas>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 mb-6">
+                        <button data-dataset="0" class="toggle-dataset-button py-1 px-3 text-sm bg-green-100 text-green-700 rounded-full hover:bg-green-200 active">Поступления</button>
+                        <button data-dataset="1" class="toggle-dataset-button py-1 px-3 text-sm bg-red-100 text-red-700 rounded-full hover:bg-red-200 active">Расходы</button>
+                        <button data-dataset="2" class="toggle-dataset-button py-1 px-3 text-sm bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 active">Чистый поток</button>
                     </div>
                     <div class="grid md:grid-cols-3 gap-6 text-center">
                         <div class="bg-slate-100 p-4 rounded-lg">
@@ -171,21 +191,29 @@
                         <div>
                             <h3 class="text-xl font-bold mb-4 text-center text-slate-800">Ключевые показатели (KPI)</h3>
                             <div class="space-y-3">
-                                <div class="p-3 bg-slate-100 rounded-lg">
+                                <div class="kpi-card p-3 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
                                     <h4 class="font-semibold">Рентабельность продаж (ROS)</h4>
-                                    <p class="text-sm text-slate-600">Сколько копеек чистой прибыли в каждом рубле выручки.</p>
+                                    <div class="kpi-card-detail pt-1">
+                                        <p>Показывает, сколько копеек чистой прибыли вы получаете с каждого рубля выручки. <span class="font-medium">Формула: Чистая прибыль / Выручка.</span></p>
+                                    </div>
                                 </div>
-                                <div class="p-3 bg-slate-100 rounded-lg">
+                                <div class="kpi-card p-3 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
                                     <h4 class="font-semibold">Рентабельность активов (ROA)</h4>
-                                    <p class="text-sm text-slate-600">Насколько эффективно вы используете свои активы для генерации прибыли.</p>
+                                    <div class="kpi-card-detail pt-1">
+                                        <p>Оценивает, насколько эффективно вы используете свои активы для генерации прибыли. <span class="font-medium">Формула: Чистая прибыль / Средняя стоимость активов.</span></p>
+                                    </div>
                                 </div>
-                                <div class="p-3 bg-slate-100 rounded-lg">
+                                <div class="kpi-card p-3 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
                                     <h4 class="font-semibold">Рентабельность капитала (ROE)</h4>
-                                    <p class="text-sm text-slate-600">Какую отдачу получают собственники на вложенный капитал.</p>
+                                    <div class="kpi-card-detail pt-1">
+                                        <p>Показывает, какую отдачу получают собственники на вложенный капитал. <span class="font-medium">Формула: Чистая прибыль / Средний собственный капитал.</span></p>
+                                    </div>
                                 </div>
-                                 <div class="p-3 bg-slate-100 rounded-lg">
+                                 <div class="kpi-card p-3 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
                                     <h4 class="font-semibold">Коэффициент ликвидности</h4>
-                                    <p class="text-sm text-slate-600">Способность компании покрывать свои краткосрочные долги.</p>
+                                    <div class="kpi-card-detail pt-1">
+                                        <p>Отражает способность компании покрывать свои краткосрочные долги. <span class="font-medium">Формула: Оборотные активы / Краткосрочные обязательства.</span></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -268,10 +296,14 @@
     </div>
 
     <script>
+        let ddsChartInstance; // Declare a variable to hold the chart instance
+
         document.addEventListener('DOMContentLoaded', function() {
             const navButtons = document.querySelectorAll('.nav-button');
             const tabContents = document.querySelectorAll('.tab-content');
             const accordionHeaders = document.querySelectorAll('.accordion-header');
+            const kpiCards = document.querySelectorAll('.kpi-card');
+            const toggleDatasetButtons = document.querySelectorAll('.toggle-dataset-button');
 
             function switchTab(targetId) {
                 tabContents.forEach(content => {
@@ -300,7 +332,6 @@
                         content.style.maxHeight = null;
                         icon.style.transform = 'rotate(0deg)';
                     } else {
-                        // Close other open accordions
                         document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
                         document.querySelectorAll('.accordion-header span').forEach(i => i.style.transform = 'rotate(0deg)');
                         
@@ -310,9 +341,26 @@
                 });
             });
 
+            kpiCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const detail = card.querySelector('.kpi-card-detail');
+                    if (card.classList.contains('active')) {
+                        card.classList.remove('active');
+                        detail.style.maxHeight = null;
+                    } else {
+                        document.querySelectorAll('.kpi-card.active').forEach(activeCard => {
+                            activeCard.classList.remove('active');
+                            activeCard.querySelector('.kpi-card-detail').style.maxHeight = null;
+                        });
+                        card.classList.add('active');
+                        detail.style.maxHeight = detail.scrollHeight + "px";
+                    }
+                });
+            });
+
             function createDdsChart() {
                 const ctx = document.getElementById('ddsChart').getContext('2d');
-                new Chart(ctx, {
+                ddsChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
@@ -359,6 +407,16 @@
                     }
                 });
             }
+
+            toggleDatasetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const datasetIndex = parseInt(button.dataset.dataset);
+                    const isHidden = ddsChartInstance.isDatasetVisible(datasetIndex);
+                    ddsChartInstance.setDatasetVisibility(datasetIndex, !isHidden);
+                    ddsChartInstance.update();
+                    button.classList.toggle('active', !isHidden);
+                });
+            });
 
             function createBalanceChart() {
                 const ctx = document.getElementById('balanceChart').getContext('2d');
